@@ -28,14 +28,13 @@ pub contract SlothsEggsBudAirdrop {
     
     access(account) fun claimBudAirdrop(address: Address) {
         self.updateAirdropTimes()
-        if(self.lastAirdropStart < self.playerClaimTimes[address]!) {
-          panic( "error.airdrop.already.claimed")
-        }
-        if(self.playerClaimTimes[address] == nil){
+        if(self.playerClaimTimes[address] == nil || self.playerContinoousClaimCount[address] == nil){
           self.playerClaimTimes[address] = 0.0
           self.playerContinoousClaimCount[address] = 0
         }
-        
+        if(self.lastAirdropStart < self.playerClaimTimes[address]!) {
+          panic( "error.airdrop.already.claimed")
+        }
 
         SlothsEggsBud.mintTokensForPlayer(amount: self.AIRDROP_BUD_AMOUNT, playerAddress: address)
         if(getCurrentBlock().timestamp - self.playerClaimTimes[address]! < self.AIRDROP_CLAIM_INTERVAL) {
@@ -59,7 +58,7 @@ pub contract SlothsEggsBudAirdrop {
     
     init() {
         self.AIRDROP_BUD_AMOUNT= 500.0
-        self.AIRDROP_CLAIM_INTERVAL= 86400.0 / 24.0
+        self.AIRDROP_CLAIM_INTERVAL= 86400.0
         self.lastAirdropStart= getCurrentBlock().timestamp
 
         self.playerClaimTimes= {}

@@ -19,7 +19,7 @@ pub contract SlothsEggsBudStake {
         self.playerBudStakes = {}
         destroy self.budStakeVault.withdraw(amount: self.budStakeVault.balance)
         self.lastBudStakePayout = getCurrentBlock().timestamp
-        SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 0.0, bossPoolPercent: 0.0, budStakingPoolPercent: 100.0, dripPercent: 1.0)
+        SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 0.0, bossPoolPercent: 0.0, budStakingPoolPercent: 100.0, dripPercent: 5.0)
         emit BudStakeBurnt()
     }
 
@@ -31,22 +31,26 @@ pub contract SlothsEggsBudStake {
 
       let budStakingPrizePoolRef = SlothsEggsPrizePools.getPrizeVaultReference(name: "budStakingPool")
       eventData.totalFlowBalance = budStakingPrizePoolRef.balance
-      // payout 5% of pool to player that run distribute tx
-      let distributorAmount = budStakingPrizePoolRef.balance * 0.05
-      let distributerFlowReceiverRef = SlothsEggsPrizePools.getAddressFlowReceiverReference(address: address)
-      distributerFlowReceiverRef.deposit(from: <- budStakingPrizePoolRef.withdraw(amount: distributorAmount))
-      eventData.distributorFlowAmount = distributorAmount
-      // payout all stakers
+      
       let totalBudsStaked = self.getBudStakeBalance()
       eventData.totalBudsBalance = totalBudsStaked
-      let playerBudStakes = self.playerBudStakes
-      let totalBudStakeFlowBalance = budStakingPrizePoolRef.balance 
-      for playerAddress in playerBudStakes.keys {
-        let playerAmount = (totalBudStakeFlowBalance / totalBudsStaked).saturatingMultiply(playerBudStakes[playerAddress]!) 
-        let playerFlowVaultRef = SlothsEggsPrizePools.getAddressFlowReceiverReference(address: playerAddress)
-        playerFlowVaultRef.deposit(from: <- budStakingPrizePoolRef.withdraw(amount: playerAmount))!
-        eventData.playerBudStakes[playerAddress] = playerBudStakes[playerAddress]!
-        eventData.playerRewards[playerAddress] = playerAmount
+      
+      if(budStakingPrizePoolRef.balance > 0.0) {
+        // payout 5% of pool to player that run distribute tx
+        let distributorAmount = budStakingPrizePoolRef.balance * 0.05
+        let distributerFlowReceiverRef = SlothsEggsPrizePools.getAddressFlowReceiverReference(address: address)
+        distributerFlowReceiverRef.deposit(from: <- budStakingPrizePoolRef.withdraw(amount: distributorAmount))
+        eventData.distributorFlowAmount = distributorAmount
+        // payout all stakers
+        let playerBudStakes = self.playerBudStakes
+        let totalBudStakeFlowBalance = budStakingPrizePoolRef.balance 
+        for playerAddress in playerBudStakes.keys {
+          let playerAmount = (totalBudStakeFlowBalance / totalBudsStaked).saturatingMultiply(playerBudStakes[playerAddress]!) 
+          let playerFlowVaultRef = SlothsEggsPrizePools.getAddressFlowReceiverReference(address: playerAddress)
+          playerFlowVaultRef.deposit(from: <- budStakingPrizePoolRef.withdraw(amount: playerAmount))!
+          eventData.playerBudStakes[playerAddress] = playerBudStakes[playerAddress]!
+          eventData.playerRewards[playerAddress] = playerAmount
+        }
       }
       self.resetBudStakes()
       emit BudStakeBurnt()

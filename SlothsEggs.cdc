@@ -119,7 +119,7 @@ pub contract SlothsEggs {
         SlothsEggsSloths.resetSlothsBoosterPrices()
         SlothsEggsBushmen.resetBushmenBoosterPrices()
         SlothsEggsBushmen.setBushmanBoosterOwnerAndLevelUpPrice(index: 4, address: address)
-        SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 70.0, bossPoolPercent: 0.0, budStakingPoolPercent: 30.0, dripPercent: 5.0)
+        SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 7.5)
         self.lastSeasonStart = getCurrentBlock().timestamp
         emit SeasonStarted()
     }
@@ -197,11 +197,16 @@ pub contract SlothsEggs {
                 SlothsEggsBushmen.BUSHMAN_BOOSTERS[index]!.getFlowPrice() <= paymentVault.balance : "error.payment.too.low" 
             }
             self.updatePlayer()
+            let holderRewardAmount = SlothsEggsBushmen.BUSHMAN_BOOSTERS[index]!.getFlowPrice() / 100.0 * 55.0
+            let holderAddress = SlothsEggsBushmen.BUSHMAN_BOOSTERS[index]!.currentOwner
+            SlothsEggsPrizePools.getAddressFlowReceiverReference(address: holderAddress).deposit(from: <- paymentVault.withdraw(amount: holderRewardAmount))
             SlothsEggsBushmen.buyBudProductionBooster(address: self.owner!.address, index: index)
-            // pay all to reserve
-            SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
-            // make reserve drip to pools
-            SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 0.05)
+            if(paymentVault.balance > 0.0) {
+              SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
+              SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 2.0)
+            } else {
+              destroy paymentVault
+            }
         }
         
         pub fun upgradeSloths(addedLevels: {Int: Int}, paymentVault: @FlowToken.Vault) {
@@ -219,8 +224,13 @@ pub contract SlothsEggs {
               panic("error.flow.balance.too.low")
             }
             SlothsEggsSloths.levelUpSloths(address: self.owner!.address, addedLevels: addedLevels)
-            SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
-            SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 0.05)
+            if(paymentVault.balance > 0.0) {
+              SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
+              SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 2.0)
+            } else {
+              destroy paymentVault
+            }
+            
         }
 
         pub fun buyEggProductionBooster(index: Int, paymentVault: @FlowToken.Vault) {
@@ -231,10 +241,13 @@ pub contract SlothsEggs {
             }
             self.updatePlayer()
             SlothsEggsSloths.buyEggProductionBooster(address: self.owner!.address, index: index)
-            // pay all to reserve
-            SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
-            // make reserve drip to pools
-            SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 0.05)
+            
+            if(paymentVault.balance > 0.0) {
+              SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
+              SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 100.0, bossPoolPercent: 0.0, budStakingPoolPercent: 0.0, dripPercent: 2.0)
+            } else {
+              destroy paymentVault
+            }
         }
         
         pub fun buyGameSponsor(paymentVault: @FlowToken.Vault) {

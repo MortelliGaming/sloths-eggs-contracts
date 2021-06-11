@@ -87,18 +87,21 @@ pub contract SlothsEggsBoss {
     priv fun handleBossKill(killerAddress: Address) {
       // killer gets 10% 
       let bossPoolRef = SlothsEggsPrizePools.getPrizeVaultReference(name: "bossKillPool")!
-      let killerAmount = (bossPoolRef.balance / 100.0).saturatingMultiply(10.0)
-      self.getAddressFlowReceiverReference(address: killerAddress).deposit(from: <- bossPoolRef.withdraw(amount: killerAmount))
-      emit PlayerPaymentFromBudBossKillPool(address: killerAddress, amount: killerAmount)
-      // rest distributed proportional to damage (also last attacker gets his part!)
-      let totalBossPoolBalance = bossPoolRef.balance
-      let totalDamage = self.getTotalDamage()
-      for damageAddress in self.playerDamagePoints.keys {
-        let playerAmount = totalBossPoolBalance / totalDamage * self.playerDamagePoints[damageAddress]!
-        self.getAddressFlowReceiverReference(address: damageAddress).deposit(from: <- bossPoolRef.withdraw(amount: playerAmount))
-        emit PlayerPaymentFromBudBossKillPool(address: damageAddress, amount: playerAmount)
+      if(bossPoolRef.balance > 0.0) {
+        let killerAmount = (bossPoolRef.balance / 100.0).saturatingMultiply(10.0)
+        self.getAddressFlowReceiverReference(address: killerAddress).deposit(from: <- bossPoolRef.withdraw(amount: killerAmount))
+        emit PlayerPaymentFromBudBossKillPool(address: killerAddress, amount: killerAmount)
+        // rest distributed proportional to damage (also last attacker gets his part!)
+        let totalBossPoolBalance = bossPoolRef.balance
+        let totalDamage = self.getTotalDamage()
+        for damageAddress in self.playerDamagePoints.keys {
+          let playerAmount = totalBossPoolBalance / totalDamage * self.playerDamagePoints[damageAddress]!
+          self.getAddressFlowReceiverReference(address: damageAddress).deposit(from: <- bossPoolRef.withdraw(amount: playerAmount))
+          emit PlayerPaymentFromBudBossKillPool(address: damageAddress, amount: playerAmount)
+        }
       }
-      SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 0.0, bossPoolPercent: 100.0, budStakingPoolPercent: 0.0, dripPercent: 2.0)
+      
+      SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 0.0, bossPoolPercent: 100.0, budStakingPoolPercent: 0.0, dripPercent: 5.0)
       emit BossKilled(address: killerAddress)
     }
 

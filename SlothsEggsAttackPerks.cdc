@@ -163,8 +163,10 @@ access(all) contract SlothsEggsAttackPerks {
         if(self.isAttackPerkProducerUpgrading(address: address) == true) {
             panic("error.already.upgrading.attackPerkProducer")
         }
-        SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
-        SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 33.0, bossPoolPercent: 33.0, budStakingPoolPercent: 34.0, dripPercent: 5.0)
+        if(paymentVault.balance > 0.0) {
+          SlothsEggsPrizePools.distributeToDevAndSponsorAndReserveVault(paymentVault: <- paymentVault)
+          SlothsEggsPrizePools.dripFromReserve(topPlayerPoolPercent: 33.0, bossPoolPercent: 33.0, budStakingPoolPercent: 34.0, dripPercent: 0.05)
+        }
         let budsCost = self.attackPerkProducerLevels[self.effectivePlayerPerkProducerLevels()[address]!]!.budsCost
         
         let playerBudVaultRef = SlothsEggsBud.getPlayerVaultReference(address: address)!
@@ -212,7 +214,7 @@ access(all) contract SlothsEggsAttackPerks {
 
     access(account) fun useAttackPerk(address: Address, perkIndex: Int, attackerPower: UFix64, defenderPower: UFix64): AttackPerkResult {
         pre {
-            perkIndex < self.attackPerkTypes.keys.length - 1 : "error.invalid.perkIndex"
+            perkIndex < self.attackPerkTypes.keys.length : "error.invalid.perkIndex"
         }
         self.updatePlayer(address: address)
         if(self.playerAttackPerk[address]![perkIndex] < 1) {

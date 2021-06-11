@@ -46,9 +46,9 @@ pub contract SlothsEggsPrizePools {
         let dripAmount = self.reserveVault.balance / 100.0 * dripPercent // 5% of the reserve drips to pricepools  
         self.prizeVaults["topBudProductionPool"]?.deposit(from: <- self.reserveVault.withdraw(amount: dripAmount / 100.0 * topPlayerPoolPercent ))
         emit DepositedToTopBudProductionPool(amount: dripAmount / 100.0 * topPlayerPoolPercent)
-        self.prizeVaults["bossKillPool"]?.deposit(from: <- self.reserveVault.withdraw(amount: dripAmount  / 100.0 * bossPoolPercent))
+        self.prizeVaults["bossKillPool"]?.deposit(from: <- self.reserveVault.withdraw(amount: dripAmount / 100.0 * bossPoolPercent))
         emit DepositedToBossKillPool(amount: dripAmount  / 100.0 * bossPoolPercent)
-        self.prizeVaults["budStakingPool"]?.deposit(from: <- self.reserveVault.withdraw(amount: dripAmount  / 100.0 * budStakingPoolPercent))
+        self.prizeVaults["budStakingPool"]?.deposit(from: <- self.reserveVault.withdraw(amount: dripAmount / 100.0 * budStakingPoolPercent))
         emit DepositedToBudStakingPool(amount: dripAmount  / 100.0 * budStakingPoolPercent)
     }
     
